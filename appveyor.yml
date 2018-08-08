@@ -1,0 +1,27 @@
+version: '{branch}-{build}'
+skip_non_tags: false
+platform:
+- x86
+- x64
+init:
+- cmd: IF %APPVEYOR_REPO_TAG%==true appveyor UpdateBuild -Version %APPVEYOR_REPO_TAG_NAME%-%APPVEYOR_BUILD_NUMBER%
+before_build:
+- cmd: >-
+    IF %APPVEYOR_REPO_TAG%==true appveyor DownloadFile https://hg.mozilla.org/mozilla-central/raw-file/%APPVEYOR_REPO_TAG_NAME:*-=%/testing/tools/screenshot/win32-screenshot.cpp
+
+    IF %APPVEYOR_REPO_TAG%==false appveyor DownloadFile https://hg.mozilla.org/mozilla-central/raw-file/tip/testing/tools/screenshot/win32-screenshot.cpp
+build_script:
+- cmd: build.bat
+after_build:
+- cmd: 7z a screenshot-%Platform%.zip *.exe
+artifacts:
+- path: '*.zip'
+  name: screenshot
+deploy:
+- provider: GitHub
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  auth_token:
+    secure: Ygi608N5zuE/++t2eqjzQJRNkbt+ccO/bvme18sqL+zLOkNkj0K4aJuizw5fEpZo
+  artifact: /.*\.zip/
+  on:
+    APPVEYOR_REPO_TAG: true
